@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/cebe9c80-0662-457c-81f9-68f01e2104f1/resourceGroups/PRUEBAS/providers/Microsoft.Web/sites/ChatbotDreamy",
+    "appService.deploySubpath": "."
+}

@@ -4,54 +4,8 @@ import requests
 import json
 import streamlit as st
 
-news_api_key = "08456ce630c6420e863ab39a663c1ce6"
-
 client = OpenAI()
 model = "gpt-3.5-turbo"
-
-def get_news(topic):
-    url = (
-        f"https://newsapi.org/v2/everything?q={topic}&apiKey={news_api_key}&pageSize=5"
-    )
-
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            news = json.dumps(response.json(), indent=4)
-            news_json = json.loads(news)
-
-            data = news_json
-
-            # Access all the fields == loop through
-            status = data["status"]
-            totalResults = data["totalResults"]
-            articles = data["articles"]
-            final_news = []
-
-            #loop
-            for article in articles:
-                source_name = article["source"]["name"]
-                author = article["author"]
-                title = article["title"]
-                description = article["description"]
-                url = article["url"]
-                content = article["content"]
-                title_descripton = f"""
-                    Title: {title},
-                    Author: {author},
-                    Source: {source_name},
-                    Description: {description},
-                    Url: {url}
-                """
-                final_news.append(title_descripton)
-
-            return final_news
-        else:
-            return []
-        
-
-    except requests.exceptions.RequestException as e:
-        print("Error ocurred during API Request", e)
 
 def get_reservas(matricula):
     url = f"https://apidream.azurewebsites.net/reserva/{matricula}"
@@ -121,7 +75,7 @@ def crear_reserva(id_sala, id_proyecto, lider_reserva, dia_reserva, hora_inicio,
         print("Error ocurred during API Request", e)
 
 class AssistantManager:
-    thread_id = "thread_PJ674PKWPYEs9OK3sAV5u1bB"
+    thread_id = "thread_SHXsoEWiKzb6Pr07kjuF6x64"
     assistant_id = "asst_8868Xx2ENW0JGxsKtY3burgv"
 
     def __init__(self, model: str = model):
@@ -208,18 +162,8 @@ class AssistantManager:
         for action in required_actions["tool_calls"]:
             func_name = action["function"]["name"]
             arguments = json.loads(action["function"]["arguments"])
-
-            if func_name == "get_news":
-                output = get_news(topic=arguments["topic"])
-                print(f"STUFFF;;;;; {output}")
-                final_str = ""
-                for item in output:
-                    final_str += "".join(item)
-
-                tool_outputs.append({"tool_call_id": action["id"],
-                                     "output": final_str})
                 
-            elif func_name == "get_reservas":
+            if func_name == "get_reservas":
                 output = get_reservas(matricula=arguments["matricula"])
                 print(f"STUFFF;;;;; {output}")
                 final_str = ""
@@ -289,26 +233,9 @@ def main():
 
         if submit_button:
             manager.create_assistant(
-                name="News Summarizer",
-                instructions="You are a personal article summarizer Assistant who knows how to take a list of articles and descriptions and then write a short summary of all the news articles, you also have the capability to take a matricula and retrieve the information of a reservation based on that or create a reservation. If the user asks for a reservation give them the following script: (Para reservar una sala, necesitarás proporcionar detalles específicos como la sala, id del proyecto ,matricula del lider del proyecto, el dia de la reserva, la hora de inicio y la hora de finalización.) ",
+                name="Asistente de reservas",
+                instructions="Eres un asistente de reservas que ayuda a encontrar las reservas generadas con una matricula o puede generar reservas, si el usuario pide generar una reserva, dales la siguiente información: Para reservar una sala, necesitarás proporcionar detalles específicos como la sala, id del proyecto ,matrícula del líder del proyecto, el día de la reserva, la hora de inicio y la hora de finalización. ",
                 tools=[
-                    {
-                        "type": "function",
-                        "function": {
-                            "name": "get_news",
-                            "description": "Get the list of articles/news for the given topic",
-                            "parameters": {
-                                "type": "object",
-                                "properties": {
-                                    "topic": {
-                                        "type": "string",
-                                        "description": "The topic for which you want to get the news"
-                                    }
-                                },
-                                "required": ["topic"],
-                            }
-                        }
-                    },
                     {
                         "type": "function",
                         "function": {
@@ -374,9 +301,9 @@ def main():
             # Add the message and run the assistant
             manager.add_message_to_thread(
                 role="user",
-                content=f"summarize the news on this topic {instructions}"
+                content=f"{instructions}"
             )
-            manager.run_assistant(instructions="Summarize the news")
+            manager.run_assistant(instructions="Sigue las intrucciones de la asistente")
 
             # Wait for completions and process messages
             manager.wait_for_completion()
